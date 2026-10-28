@@ -25,7 +25,12 @@ namespace CandyChaos
 
         private void PrepareGui()
         {
-            Font font = Font.CreateDynamicFontFromOSFont(new[] { "Tahoma", "Noto Sans Thai", "Arial" }, 28);
+            Font font = Resources.Load<Font>("Fonts/NotoSansThai-Regular");
+            if (font == null)
+            {
+                Debug.LogError("Candy Chaos could not load its bundled Thai UI font.");
+                font = Font.CreateDynamicFontFromOSFont(new[] { "Noto Sans Thai", "Tahoma", "Arial" }, 28);
+            }
             panelTexture = CandyTexture(new Color32(103, 48, 150, 248), new Color32(44, 19, 83, 248), new Color32(155, 83, 205, 255));
             cardTexture = CandyTexture(new Color32(121, 55, 168, 251), new Color32(69, 28, 116, 251), new Color32(176, 87, 221, 255));
             buttonTexture = CandyTexture(new Color32(255, 121, 228, 255), new Color32(206, 48, 190, 255), new Color32(111, 28, 151, 255));
@@ -158,6 +163,7 @@ namespace CandyChaos
             {
                 case Mode.Title: DrawTitle(); break;
                 case Mode.Story: DrawStory(); break;
+                case Mode.EndingStory: DrawEndingStory(); break;
                 case Mode.CharacterSelect: DrawCharacterSelect(); break;
                 case Mode.Playing: DrawGameplay(); break;
                 case Mode.Paused: DrawGameplay(); DrawPause(); break;
@@ -201,11 +207,11 @@ namespace CandyChaos
             GUI.Label(new Rect(64, 53, 680, 58), "เลือกเพื่อนร่วมผจญภัย", headingStyle);
             GUI.Label(new Rect(75, 109, 635, 32), "แตะภาพเพื่อดูพลังพิเศษของแต่ละคน", smallStyle);
             if (SoftButton(new Rect(1053, 68, 168, 51), "ย้อนกลับ")) mode = Mode.Title;
-            DrawHeroCard(36, HeroType.Marshmallow, "มาร์ชเมลโลว์", "กระสุนระเบิด", "ลูกอมยักษ์", CandyVisuals.Hero);
-            DrawHeroCard(282, HeroType.Strawberry, "สตรอว์เบอร์รี", "แยมชะลอ", "พายุแยม", CandyVisuals.StrawberryHero);
-            DrawHeroCard(528, HeroType.Blueberry, "บลูเบอร์รี", "กระสุนน้ำแข็ง", "เกราะหิมะ", CandyVisuals.BlueberryHero);
-            DrawHeroCard(774, HeroType.Mage, "จอมเวทน้ำตาล", "ยิงวงกว้าง", "ดอกเวทมนตร์", CandyVisuals.MageHero);
-            DrawHeroCard(1020, HeroType.Sniper, "มือสไนเปอร์", "ยิงแรงแต่ช้า", "เพ่งเล็งทองคำ", CandyVisuals.SniperHero);
+            DrawHeroCard(36, HeroType.Marshmallow, "Marlo", "กระสุนระเบิด", "ลูกอมยักษ์", CandyVisuals.Hero);
+            DrawHeroCard(282, HeroType.Strawberry, "berrybliss", "แยมชะลอ", "พายุแยม", CandyVisuals.StrawberryHero);
+            DrawHeroCard(528, HeroType.Blueberry, "Bluebelle", "กระสุนน้ำแข็ง", "เกราะหิมะ", CandyVisuals.BlueberryHero);
+            DrawHeroCard(774, HeroType.Mage, "Cottony", "ยิงวงกว้าง", "ดอกเวทมนตร์", CandyVisuals.MageHero);
+            DrawHeroCard(1020, HeroType.Sniper, "Citra tart", "ยิงแรงแต่ช้า", "เพ่งเล็งทองคำ", CandyVisuals.SniperHero);
             GUI.Box(new Rect(60, 604, 1160, 51), "", cardStyle);
             GUI.Label(new Rect(78, 607, 1124, 45), HeroPreview(previewHero), centeredStyle);
         }
@@ -214,11 +220,11 @@ namespace CandyChaos
         {
             switch (hero)
             {
-                case HeroType.Strawberry: return "สตรอว์เบอร์รี  ·  โปรยแยมรอบตัว ทิ้งบ่อหนืดชะลอศัตรู";
-                case HeroType.Blueberry: return "บลูเบอร์รี  ·  กางเกราะน้ำแข็ง ป้องกันตัวและชะลอศัตรูใกล้ ๆ";
-                case HeroType.Mage: return "จอมเวทน้ำตาล  ·  โปรยกระสุนเวทมนตร์เป็นวงกว้าง";
-                case HeroType.Sniper: return "มือสไนเปอร์  ·  ตั้งสมาธิ เพิ่มพลังให้ทุกนัดชั่วคราว";
-                default: return "มาร์ชเมลโลว์  ·  ยิงลูกอมยักษ์ให้ระเบิดเมื่อโดนศัตรู";
+                case HeroType.Strawberry: return "berrybliss  ·  โปรยแยมรอบตัว ทิ้งบ่อหนืดชะลอศัตรู";
+                case HeroType.Blueberry: return "Bluebelle  ·  กางเกราะน้ำแข็ง ป้องกันตัวและชะลอศัตรูใกล้ ๆ";
+                case HeroType.Mage: return "Cottony  ·  โปรยกระสุนเวทมนตร์เป็นวงกว้าง";
+                case HeroType.Sniper: return "Citra tart  ·  ตั้งสมาธิ เพิ่มพลังให้ทุกนัดชั่วคราว";
+                default: return "Marlo  ·  ยิงลูกอมยักษ์ให้ระเบิดเมื่อโดนศัตรู";
             }
         }
 
@@ -243,7 +249,7 @@ namespace CandyChaos
             GUI.Label(new Rect(x + 8, 377, 208, 48), name, cardTitleStyle);
             GUI.Label(new Rect(x + 10, 426, 204, 29), "ยิงปกติ  " + weapon, hintStyle);
             GUI.Label(new Rect(x + 10, 462, 204, 29), "พิเศษ  " + special, hintStyle);
-            if (SuccessButton(new Rect(x + 20, 518, 184, 52), "เลือกคนนี้"))
+            if (SuccessButton(new Rect(x + 20, 518, 184, 52), "เลือก"))
             {
                 selectedHero = hero;
                 StartRun(pendingEndless);

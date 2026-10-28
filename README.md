@@ -60,3 +60,5 @@
 - **iOS:** ต้องใช้ Unity Editor บน macOS และติดตั้ง iOS Build Support
 
 ตัวเกมแสดงผลแนวนอน โดยใช้ภาพต้นฉบับใน `Assets/CandyChaos/Resources/Art/` และรันเกมจากสคริปต์ใน `Assets/CandyChaos/Scripts/`
+
+ฟอนต์ภาษาไทย `Noto Sans Thai` ถูกฝังไว้ใน `Assets/CandyChaos/Resources/Fonts/` เพื่อให้ข้อความแสดงผลเหมือนกันบน Windows, Android, iOS และ Web build โดยไม่ต้องพึ่งฟอนต์ที่ติดตั้งในเครื่องผู้เล่น

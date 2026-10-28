@@ -25,6 +25,7 @@ namespace CandyChaos
         private float storySlide = 1f;
         private Vector2 storySwipeStart;
         private Texture2D[] storyArtwork;
+        private Texture2D endingArtwork;
 
         private void BeginStory()
         {
@@ -44,6 +45,15 @@ namespace CandyChaos
             storySlide = 1f;
             storySwipeFinger = -1;
             mode = Mode.Story;
+        }
+
+        private void BeginEndingStory()
+        {
+            if (endingArtwork == null)
+            {
+                endingArtwork = Resources.Load<Texture2D>("Art/StoryEnding");
+            }
+            mode = Mode.EndingStory;
         }
 
         private void FinishStory()
@@ -162,6 +172,30 @@ namespace CandyChaos
             if (artwork != null)
                 GUI.DrawTexture(new Rect(5, 4, 1198, 428), artwork, ScaleMode.ScaleToFit);
             GUI.EndGroup();
+        }
+        private void DrawEndingStory()
+        {
+            GUI.Box(new Rect(18, 15, 1244, 690), "", panelStyle);
+            GUI.Label(new Rect(54, 31, 880, 55), "บทส่งท้าย  ·  คริสตัลสายรุ้งหวนคืน", storyHeadingStyle);
+            GUI.Label(new Rect(1080, 37, 145, 43), "ชัยชนะ!", centeredStyle);
+            DrawAccent(new Rect(1068, 87, 150, 4), Yellow);
+
+            GUI.BeginGroup(new Rect(36, 102, 1208, 446));
+            GUI.Box(new Rect(0, 0, 1208, 446), "", storyFrameStyle);
+            Texture2D art = endingArtwork != null ? endingArtwork : CandyVisuals.MenuArt;
+            if (art != null)
+                GUI.DrawTexture(new Rect(5, 4, 1198, 438), art, ScaleMode.ScaleToFit);
+            GUI.EndGroup();
+
+            GUI.Box(new Rect(36, 560, 1208, 67), "", cardStyle);
+            GUI.Label(new Rect(62, 565, 1156, 55),
+                "ด้วยความกล้าหาญของเหล่าผู้พิทักษ์ คริสตัลสายรุ้งได้ถูกประกอบกลับคืน ความสงบสุขและความหวานละมุนได้กลับคืนสู่อาณาจักรขนมอีกครั้ง!",
+                centeredStyle);
+
+            if (ActionButton(new Rect(480, 645, 320, 53), "ดูผลคะแนน"))
+            {
+                EndRun(true);
+            }
         }
     }
 }

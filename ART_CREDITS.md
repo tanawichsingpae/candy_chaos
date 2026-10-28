@@ -1,5 +1,11 @@
 # Original art for Candy Chaos
 
+## Noto Sans Thai
+
+The Thai UI uses `NotoSansThai-Regular.ttf` from the Noto Project Authors. It is distributed under the SIL Open Font License 1.1. The license text is stored at `Assets/CandyChaos/Fonts/NotoSansThai-OFL.txt`.
+
+Source: https://github.com/notofonts/thai/releases/tag/NotoSansThai-v2.002
+
 The PNG files in `Assets/CandyChaos/Resources/Art/` were generated with the built-in imagegen tool on 2026-10-27 and 2026-10-28. They are original game assets, using the user's pastel candy and soft jelly references as high-level direction. No images from the search-results screenshot were copied.
 
 ## Opening story illustrations

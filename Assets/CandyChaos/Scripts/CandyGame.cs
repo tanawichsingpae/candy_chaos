@@ -5,7 +5,7 @@ namespace CandyChaos
 {
     public sealed partial class CandyGame : MonoBehaviour
     {
-        private enum Mode { Title, Story, CharacterSelect, Playing, Paused, Upgrade, ChapterClear, BonusResult, Defeat, Victory }
+        private enum Mode { Title, Story, CharacterSelect, Playing, Paused, Upgrade, ChapterClear, BonusResult, Defeat, Victory, EndingStory }
         private enum HeroType { Marshmallow, Strawberry, Blueberry, Mage, Sniper }
         private enum ShotKind { Standard, Marshmallow, Jam, BlueberryIce, EnemyJam, EnemyCaramel, EnemyFrost, EnemyMint }
         private enum EnemyType { Pink, Purple, Cupcake, Tank, Mint, Lollipop, Donut, Cookie, Macaron, IceCream, Gummy,
@@ -145,7 +145,7 @@ namespace CandyChaos
         private void Awake()
         {
             Application.targetFrameRate = 60;
-            if (Application.isMobilePlatform)
+            if (Application.isMobilePlatform && Application.platform != RuntimePlatform.WebGLPlayer)
             {
                 Screen.autorotateToLandscapeLeft = true;
                 Screen.autorotateToLandscapeRight = true;
@@ -394,7 +394,7 @@ namespace CandyChaos
 
         private void Update()
         {
-            if (mode == Mode.Story)
+            if (mode == Mode.Story || mode == Mode.EndingStory)
             {
                 UpdateStory();
                 return;
@@ -1159,10 +1159,7 @@ namespace CandyChaos
                             type == DropType.Heart && CandyVisuals.HeartProp != null ? CandyVisuals.HeartProp :
                             type == DropType.Coin && CandyVisuals.CandyCoin != null ? CandyVisuals.CandyCoin :
                             type == DropType.Sugar ? CandyVisuals.Star : CandyVisuals.Dot;
-            SpriteRenderer visual = CandyVisuals.Create(type.ToString(), sprite,
-                position, type == DropType.Crystal ? (CandyVisuals.CrystalProp != null ? 0.32f : 0.52f) :
-                type == DropType.Heart && CandyVisuals.HeartProp != null ? 0.36f : type == DropType.Sugar ? 0.31f :
-                type == DropType.Coin && CandyVisuals.CandyCoin != null ? 0.52f : 0.36f, 6, worldRoot);
+            SpriteRenderer visual = CandyVisuals.Create(type.ToString(), sprite, position, 0.52f, 6, worldRoot);
             visual.color = type == DropType.Sugar ? new Color32(255, 214, 97, 255) : type == DropType.Crystal ? new Color32(255, 238, 135, 255) :
                            type == DropType.Coin ? (CandyVisuals.CandyCoin != null ? Color.white : new Color32(255, 176, 58, 255)) :
                            new Color32(255, 93, 133, 255);
@@ -1308,7 +1305,7 @@ namespace CandyChaos
             runCoins = 0;
             Save();
             ClearEntities();
-            if (!endless && chapter >= 2) EndRun(true);
+            if (!endless && chapter >= 2) BeginEndingStory();
             else mode = Mode.ChapterClear;
         }
 
