@@ -1,6 +1,16 @@
 # Original art for Candy Chaos
 
-The PNG files in `Assets/CandyChaos/Resources/Art/` were generated with the built-in imagegen tool on 2026-10-27. They are original game assets, using the user's pastel candy and soft jelly references as high-level direction. No images from the search-results screenshot were copied.
+The PNG files in `Assets/CandyChaos/Resources/Art/` were generated with the built-in imagegen tool on 2026-10-27 and 2026-10-28. They are original game assets, using the user's pastel candy and soft jelly references as high-level direction. No images from the search-results screenshot were copied.
+
+## Opening story illustrations
+
+`StoryCity.png`, `StoryStorm.png`, `StoryMonsters.png`, `StoryGuardians.png`, and `StoryJourney.png` were generated on 2026-10-28 as a five-page panoramic cutscene. The images depict the peaceful crystal city, the jam storm shattering the crystal, the candy monsters, the five guardians, and the garden/desert/snow journey. Prompts requested original hand-painted pastel storybook manga scenes without lettering or speech bubbles. The local `MenuArt.png`, character sprite sheets, elite sprite sheet, stage props, and earlier story images were supplied as style and character references. The game displays each panorama as one full-width image and renders Thai narration separately.
+
+## Collectible coin and enemy projectiles
+
+`CandyCoin.png`, `EnemyJamBolt.png`, `EnemyCaramelBolt.png`, `EnemyFrostBolt.png`, and `EnemyMintBolt.png` were generated on 2026-10-28 as separate transparent sprites. Prompts asked for a gold star candy coin and four readable enemy projectiles with distinct jam, caramel, ice, and mint silhouettes. The local `UtilityIcons.png`, `HeroCombat.png`, and `ElementIcons.png` were supplied as style references. The coin is used for arena drops and currency counters; the bolts are used by the corresponding enemy attacks.
+
+The user-cropped individual PNGs (`GummyMonster`, `MiniJelly`, `EliteJelly`, `EliteCupcake`, `StrawberryHero`, `BlueberryHero`, `MintMonster`, `LollipopMonster`, `MageHero`, `SniperHero`, `GardenMushroom`, and `DesertCactus`) now replace the corresponding sprite-sheet cells at runtime. The original sheets remain as art sources.
 
 ## MenuArt.png
 

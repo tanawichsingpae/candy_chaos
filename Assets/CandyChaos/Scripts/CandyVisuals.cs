@@ -22,6 +22,11 @@ namespace CandyChaos
         public static Sprite MiniJelly { get; private set; }
         public static Sprite EliteJelly { get; private set; }
         public static Sprite EliteCupcake { get; private set; }
+        public static Sprite CandyCoin { get; private set; }
+        public static Sprite EnemyJamBolt { get; private set; }
+        public static Sprite EnemyCaramelBolt { get; private set; }
+        public static Sprite EnemyFrostBolt { get; private set; }
+        public static Sprite EnemyMintBolt { get; private set; }
         public static Sprite Dot { get; private set; }
         public static Sprite Star { get; private set; }
         public static Sprite Ring { get; private set; }
@@ -29,9 +34,6 @@ namespace CandyChaos
         public static Sprite Floor { get { return floors[0]; } }
         public static Sprite FloorForChapter(int chapter) { return floors[chapter % floors.Length]; }
         public static Texture2D MenuArt { get; private set; }
-        public static Texture2D CharacterSheet { get; private set; }
-        public static Texture2D ExtraCharacterSheet { get; private set; }
-        public static Texture2D AdvancedCharacterSheet { get; private set; }
         public static Texture2D ShotIconSheet { get; private set; }
         public static Texture2D HeroUpgradeIconSheet { get; private set; }
         public static Texture2D UtilityIconSheet { get; private set; }
@@ -58,7 +60,6 @@ namespace CandyChaos
         {
             MenuArt = Resources.Load<Texture2D>("Art/MenuArt");
             Texture2D sheet = Resources.Load<Texture2D>("Art/Characters");
-            CharacterSheet = sheet;
             if (sheet != null)
             {
                 float w = sheet.width * 0.5f;
@@ -68,28 +69,14 @@ namespace CandyChaos
                 PurpleJelly = Make(sheet, new Rect(0, 0, w, h), 460);
                 Cupcake = Make(sheet, new Rect(w, 0, w, h), 460);
             }
-            Texture2D extra = Resources.Load<Texture2D>("Art/ExtraCharacters");
-            ExtraCharacterSheet = extra;
-            if (extra != null)
-            {
-                float w = extra.width * 0.5f;
-                float h = extra.height * 0.5f;
-                StrawberryHero = Make(extra, new Rect(0, h, w, h), 460);
-                BlueberryHero = Make(extra, new Rect(w, h, w, h), 460);
-                MintMonster = Make(extra, new Rect(0, 0, w, h), 460);
-                LollipopMonster = Make(extra, new Rect(w, 0, w, h), 460);
-            }
-            Texture2D advanced = Resources.Load<Texture2D>("Art/AdvancedCharacters");
-            AdvancedCharacterSheet = advanced;
-            if (advanced != null)
-            {
-                float w = advanced.width * 0.5f;
-                float h = advanced.height * 0.5f;
-                MageHero = Make(advanced, new Rect(0, h, w, h), 460);
-                SniperHero = Make(advanced, new Rect(w, h, w, h), 460);
-                GardenMushroom = Make(advanced, new Rect(0, 0, w, h), 460);
-                DesertCactus = Make(advanced, new Rect(w, 0, w, h), 460);
-            }
+            StrawberryHero = LoadIndividual("StrawberryHero");
+            BlueberryHero = LoadIndividual("BlueberryHero");
+            MintMonster = LoadIndividual("MintMonster");
+            LollipopMonster = LoadIndividual("LollipopMonster");
+            MageHero = LoadIndividual("MageHero");
+            SniperHero = LoadIndividual("SniperHero");
+            GardenMushroom = LoadIndividual("GardenMushroom");
+            DesertCactus = LoadIndividual("DesertCactus");
             Texture2D icons = Resources.Load<Texture2D>("Art/ElementIcons");
             ShotIconSheet = Resources.Load<Texture2D>("Art/ShotIcons");
             HeroUpgradeIconSheet = Resources.Load<Texture2D>("Art/HeroUpgradeIcons");
@@ -104,18 +91,15 @@ namespace CandyChaos
                 MacaronMonster = Make(sweets, new Rect(0, 0, w, h), 460);
                 IceCreamMonster = Make(sweets, new Rect(w, 0, w, h), 460);
             }
-            Texture2D elites = Resources.Load<Texture2D>("Art/SweetElites");
-            if (elites != null)
-            {
-                // The painted figures do not share a geometric center. Slice at the
-                // transparent gutters so crowns, frosting and arms stay with their sprite.
-                const float splitX = 690f;
-                const float splitY = 636f;
-                GummyMonster = Make(elites, new Rect(0, splitY, splitX, elites.height - splitY), 460);
-                MiniJelly = Make(elites, new Rect(splitX, splitY, elites.width - splitX, elites.height - splitY), 460);
-                EliteJelly = Make(elites, new Rect(0, 0, splitX, splitY), 460);
-                EliteCupcake = Make(elites, new Rect(splitX, 0, elites.width - splitX, splitY), 460);
-            }
+            GummyMonster = LoadIndividual("GummyMonster");
+            MiniJelly = LoadIndividual("MiniJelly");
+            EliteJelly = LoadIndividual("EliteJelly");
+            EliteCupcake = LoadIndividual("EliteCupcake");
+            CandyCoin = LoadSmallSprite("CandyCoin");
+            EnemyJamBolt = LoadSmallSprite("EnemyJamBolt");
+            EnemyCaramelBolt = LoadSmallSprite("EnemyCaramelBolt");
+            EnemyFrostBolt = LoadSmallSprite("EnemyFrostBolt");
+            EnemyMintBolt = LoadSmallSprite("EnemyMintBolt");
             Texture2D combat = Resources.Load<Texture2D>("Art/HeroCombat");
             if (combat != null)
             {
@@ -164,6 +148,28 @@ namespace CandyChaos
         private static Sprite Make(Texture2D texture, Rect rect, float pixelsPerUnit)
         {
             return Sprite.Create(texture, rect, new Vector2(0.5f, 0.5f), pixelsPerUnit);
+        }
+
+        private static Sprite LoadIndividual(string name)
+        {
+            Texture2D texture = Resources.Load<Texture2D>("Art/" + name);
+            if (texture == null)
+            {
+                Debug.LogError("Missing cropped character art: Art/" + name);
+                return null;
+            }
+            return Make(texture, new Rect(0, 0, texture.width, texture.height), 460);
+        }
+
+        private static Sprite LoadSmallSprite(string name)
+        {
+            Texture2D texture = Resources.Load<Texture2D>("Art/" + name);
+            if (texture == null)
+            {
+                Debug.LogError("Missing collectible or projectile art: Art/" + name);
+                return null;
+            }
+            return Make(texture, new Rect(0, 0, texture.width, texture.height), Mathf.Max(texture.width, texture.height));
         }
 
         public static SpriteRenderer Create(string name, Sprite sprite, Vector2 position, float scale, int order, Transform parent = null)

@@ -5,9 +5,9 @@ namespace CandyChaos
 {
     public sealed partial class CandyGame : MonoBehaviour
     {
-        private enum Mode { Title, CharacterSelect, Playing, Paused, Upgrade, ChapterClear, BonusResult, Defeat, Victory }
+        private enum Mode { Title, Story, CharacterSelect, Playing, Paused, Upgrade, ChapterClear, BonusResult, Defeat, Victory }
         private enum HeroType { Marshmallow, Strawberry, Blueberry, Mage, Sniper }
-        private enum ShotKind { Standard, Marshmallow, Jam, BlueberryIce }
+        private enum ShotKind { Standard, Marshmallow, Jam, BlueberryIce, EnemyJam, EnemyCaramel, EnemyFrost, EnemyMint }
         private enum EnemyType { Pink, Purple, Cupcake, Tank, Mint, Lollipop, Donut, Cookie, Macaron, IceCream, Gummy,
             BossJelly, BossCake, BossKing }
         private enum DropType { Sugar, Coin, Heart, Crystal }
@@ -82,6 +82,10 @@ namespace CandyChaos
         private static readonly EnemyType[] DesertLate = { EnemyType.Pink, EnemyType.Cupcake, EnemyType.Donut,
             EnemyType.Cookie, EnemyType.Mint, EnemyType.Tank, EnemyType.Lollipop, EnemyType.Macaron,
             EnemyType.Gummy, EnemyType.IceCream };
+        private static readonly EnemyType[] SnowOpening = { EnemyType.Pink, EnemyType.Purple, EnemyType.Cupcake,
+            EnemyType.Donut, EnemyType.Cookie, EnemyType.Mint };
+        private static readonly EnemyType[] SnowMid = { EnemyType.Pink, EnemyType.Purple, EnemyType.Cupcake,
+            EnemyType.Donut, EnemyType.Cookie, EnemyType.Mint, EnemyType.Tank, EnemyType.Lollipop, EnemyType.Macaron };
         private static readonly EnemyType[] SnowEnemies = { EnemyType.Pink, EnemyType.Purple, EnemyType.Cupcake,
             EnemyType.Tank, EnemyType.Mint, EnemyType.Lollipop, EnemyType.Donut, EnemyType.Cookie,
             EnemyType.Macaron, EnemyType.IceCream, EnemyType.Gummy };
@@ -128,6 +132,8 @@ namespace CandyChaos
         private const float ArenaHalfHeight = 5.75f;
         private const int BonusGoal = 10;
         private const float BonusTime = 60f;
+        private const float BossArrivalTime = 48f;
+        private const float PreBossBreakTime = 40f;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         private static void Launch()
@@ -231,7 +237,7 @@ namespace CandyChaos
             chapter = 0;
             level = 1;
             sugar = 0;
-            sugarGoal = 12;
+            sugarGoal = 10;
             score = 0;
             kills = 0;
             runCoins = 0;
@@ -266,14 +272,14 @@ namespace CandyChaos
             ClearEntities();
             playerPosition = Vector2.zero;
             heroRenderer.transform.position = playerPosition;
-            if (!retry) hp = Mathf.Min(maxHp, hp + maxHp * 0.35f);
+            if (!retry) hp = Mathf.Min(maxHp, hp + maxHp * 0.45f);
             stageClock = 0;
-            spawnClock = 1.2f;
-            eliteClock = chapter == 0 ? 27f : chapter == 1 ? 20f : 15f;
+            spawnClock = chapter == 0 ? 3f : 2.6f;
+            eliteClock = chapter == 0 ? 30f : chapter == 1 ? 25f : 19f;
             eliteWave = 0;
             eliteBanner = "";
             fireClock = 0;
-            invincibleClock = 1.5f;
+            invincibleClock = 2f;
             bannerClock = 3.5f;
             bossSpawned = false;
             chapterClearPending = false;
@@ -294,11 +300,11 @@ namespace CandyChaos
             playerPosition = Vector2.zero;
             heroRenderer.transform.position = playerPosition;
             stageClock = 0;
-            spawnClock = 0.4f;
+            spawnClock = 1.2f;
             eliteClock = 100f;
             eliteBanner = "";
             fireClock = 0;
-            invincibleClock = 1.5f;
+            invincibleClock = 2f;
             bannerClock = 4f;
             bossSpawned = false;
             chapterClearPending = false;
@@ -388,6 +394,11 @@ namespace CandyChaos
 
         private void Update()
         {
+            if (mode == Mode.Story)
+            {
+                UpdateStory();
+                return;
+            }
             if (Input.GetKeyDown(KeyCode.Escape))
             {
                 if (mode == Mode.Playing) mode = Mode.Paused;
@@ -656,11 +667,15 @@ namespace CandyChaos
             if (bullets.Count > 190) return;
             Sprite sprite = kind == ShotKind.Marshmallow ? CandyVisuals.MarshmallowShot :
                             kind == ShotKind.Jam ? CandyVisuals.JamShot :
-                            kind == ShotKind.BlueberryIce ? CandyVisuals.BlueberryShot : CandyVisuals.Dot;
+                            kind == ShotKind.BlueberryIce ? CandyVisuals.BlueberryShot :
+                            kind == ShotKind.EnemyJam ? CandyVisuals.EnemyJamBolt :
+                            kind == ShotKind.EnemyCaramel ? CandyVisuals.EnemyCaramelBolt :
+                            kind == ShotKind.EnemyFrost ? CandyVisuals.EnemyFrostBolt :
+                            kind == ShotKind.EnemyMint ? CandyVisuals.EnemyMintBolt : CandyVisuals.Dot;
             if (sprite == null) sprite = CandyVisuals.Dot;
-            float scale = hostile ? 0.34f : kind == ShotKind.Marshmallow ? (special ? 0.9f : 0.56f) :
+            float scale = hostile ? (kind == ShotKind.EnemyFrost ? 0.54f : 0.48f) : kind == ShotKind.Marshmallow ? (special ? 0.9f : 0.56f) :
                           kind == ShotKind.Jam ? 0.43f : kind == ShotKind.BlueberryIce ? 0.42f : 0.28f;
-            SpriteRenderer visual = CandyVisuals.Create(hostile ? "Frosting shot" : "Candy shot", sprite, position, scale, 8, worldRoot);
+            SpriteRenderer visual = CandyVisuals.Create(hostile ? "Enemy candy shot" : "Candy shot", sprite, position, scale, 8, worldRoot);
             visual.color = kind == ShotKind.Standard ? color : Color.white;
             if (kind != ShotKind.Standard)
                 visual.transform.rotation = Quaternion.Euler(0, 0, Mathf.Atan2(velocity.y, velocity.x) * Mathf.Rad2Deg);
@@ -679,33 +694,42 @@ namespace CandyChaos
 
         private void UpdateSpawning(float dt)
         {
-            int eliteLimit = chapter == 0 ? 1 : chapter == 1 ? 2 : 3;
-            if (!bonusStage && !bossSpawned && stageClock < 43f && eliteWave < eliteLimit && eliteClock <= 0 && enemies.Count < 24)
+            int eliteLimit = chapter == 0 ? 1 : chapter == 1 ? 1 : 2;
+            bool eliteAlive = false;
+            foreach (Enemy enemy in enemies) if (enemy.elite) { eliteAlive = true; break; }
+            if (!bonusStage && !bossSpawned && stageClock < 37f && eliteWave < eliteLimit &&
+                eliteClock <= 0 && !eliteAlive && enemies.Count < 18)
             {
                 EnemyType type = EliteTypes[(chapter * 3 + eliteWave) % EliteTypes.Length];
                 SpawnEnemyVariant(type, EdgePoint(), true, false);
                 eliteWave++;
-                eliteClock = chapter == 1 ? 15f : 13f;
-                eliteBanner = "ศัตรูพิเศษ: " + EliteName(type);
+                eliteClock = chapter == 2 ? 16f : 18f;
+                eliteBanner = "ตัวแสบมาแล้ว! " + EliteName(type);
                 bannerClock = 2.8f;
                 audioPlayer.EliteAlert();
             }
-            if (!bonusStage && !bossSpawned && stageClock >= 48f)
+            if (!bonusStage && !bossSpawned && stageClock >= BossArrivalTime)
             {
                 SpawnBoss();
                 bossSpawned = true;
-                spawnClock = 4f;
+                spawnClock = 5f;
                 bannerClock = 3f;
             }
-            if (!bonusStage && !bossSpawned && stageClock >= 43f) return;
+            if (!bonusStage && !bossSpawned && stageClock >= PreBossBreakTime) return;
             if (!bonusStage && bossSpawned && chapter == 0) return;
-            int enemyLimit = bonusStage ? 18 : bossSpawned ? chapter == 1 ? 12 : 14 :
-                chapter == 0 ? 20 : chapter == 1 ? 26 : 34;
-            if (spawnClock > 0 || enemies.Count >= enemyLimit) return;
-            spawnClock = bonusStage ? 1f : bossSpawned ? chapter == 1 ? 4.5f : 3.5f :
-                Mathf.Max(0.75f, 1.75f - stageClock * 0.016f - chapter * 0.1f);
-            int count = bonusStage || bossSpawned ? 1 : 1 + (stageClock >= 18f ? 1 : 0) +
-                (stageClock >= 36f && chapter >= 2 ? 1 : 0);
+            int enemyLimit = bonusStage ? 6 : bossSpawned ? chapter == 1 ? 6 : 8 :
+                chapter == 0 ? 14 : chapter == 1 ? 19 : 24;
+            if (enemies.Count >= enemyLimit)
+            {
+                spawnClock = Mathf.Max(spawnClock, 0.75f);
+                return;
+            }
+            if (spawnClock > 0) return;
+            spawnClock = bonusStage ? 1.8f : bossSpawned ? chapter == 1 ? 5.4f : 4.8f :
+                Mathf.Max(1.85f, 2.65f - stageClock * 0.009f - chapter * 0.1f);
+            int count = bonusStage || bossSpawned ? 1 :
+                1 + (stageClock >= (chapter == 0 ? 32f : chapter == 1 ? 29f : 24f) ? 1 : 0);
+            count = Mathf.Min(count, enemyLimit - enemies.Count);
             for (int i = 0; i < count; i++)
             {
                 EnemyType kind = bonusStage ? (Random.value < 0.55f ? EnemyType.Mint : EnemyType.Lollipop) : ChooseEnemyType();
@@ -715,10 +739,11 @@ namespace CandyChaos
 
         private EnemyType ChooseEnemyType()
         {
-            EnemyType[] pool = chapter == 0 ? stageClock < 12f ? GardenOpening :
-                stageClock < 30f ? GardenMid : GardenLate :
-                chapter == 1 ? stageClock < 18f ? DesertOpening :
-                stageClock < 30f ? DesertMid : DesertLate : SnowEnemies;
+            EnemyType[] pool = chapter == 0 ? stageClock < 17f ? GardenOpening :
+                stageClock < 32f ? GardenMid : GardenLate :
+                chapter == 1 ? stageClock < 20f ? DesertOpening :
+                stageClock < 34f ? DesertMid : DesertLate :
+                stageClock < 14f ? SnowOpening : stageClock < 30f ? SnowMid : SnowEnemies;
             return pool[Random.Range(0, pool.Length)];
         }
 
@@ -766,14 +791,14 @@ namespace CandyChaos
             float health = kind == EnemyType.Pink ? 23 : kind == EnemyType.Purple ? 29 : kind == EnemyType.Cupcake ? 27 :
                            kind == EnemyType.Mint ? 36 : kind == EnemyType.Lollipop ? 30 : kind == EnemyType.Tank ? 65 :
                            kind == EnemyType.Donut ? 34 : kind == EnemyType.Cookie ? 38 : kind == EnemyType.Macaron ? 32 :
-                           kind == EnemyType.IceCream ? 36 : kind == EnemyType.Gummy ? 42 : 390 + chapter * 140;
-            health *= 1f + chapter * 0.24f;
-            if (elite) health = health * 2.5f + 65f;
+                           kind == EnemyType.IceCream ? 36 : kind == EnemyType.Gummy ? 42 : 320 + chapter * 90;
+            health *= 1f + chapter * 0.14f;
+            if (elite) health = health * 2.15f + 45f;
             if (child) health *= 0.48f;
-            float speed = kind == EnemyType.Purple ? 3.25f : kind == EnemyType.Lollipop ? 2.65f :
+            float speed = kind == EnemyType.Purple ? 3f : kind == EnemyType.Lollipop ? 2.45f :
                           kind == EnemyType.Tank ? 1.2f : kind == EnemyType.Mint ? 1.7f :
-                          kind == EnemyType.Macaron ? 2.8f : kind == EnemyType.IceCream ? 1.55f :
-                          kind == EnemyType.Donut ? 2.35f : kind == EnemyType.Gummy ? 1.85f : isBoss ? 1.35f : 2.05f;
+                          kind == EnemyType.Macaron ? 2.6f : kind == EnemyType.IceCream ? 1.55f :
+                          kind == EnemyType.Donut ? 2.2f : kind == EnemyType.Gummy ? 1.85f : isBoss ? 1.25f : 1.9f;
             if (elite) speed *= 0.82f;
             if (child) speed *= 1.28f;
             SpriteRenderer aura = null;
@@ -785,7 +810,7 @@ namespace CandyChaos
             enemies.Add(new Enemy { sprite = visual, type = kind, position = position, hp = health, maxHp = health, speed = speed,
                 radius = isBoss ? 1.05f : elite ? 0.85f : child ? 0.29f : kind == EnemyType.Tank ? 0.62f : 0.43f,
                 boss = isBoss, elite = elite, child = child, aura = aura,
-                attackTimer = Random.Range(0.8f, 2.2f), dashTimer = Random.Range(1.5f, 3f), baseColor = baseColor });
+                attackTimer = Random.Range(1.5f, 2.8f), dashTimer = Random.Range(2f, 3.5f), baseColor = baseColor });
         }
 
         private static string EliteName(EnemyType kind)
@@ -835,7 +860,7 @@ namespace CandyChaos
                 float speed = enemy.speed * (enemy.slowTimer > 0 ? Mathf.Clamp(enemy.slowFactor, 0.2f, 1f) : 1f);
                 if ((enemy.type == EnemyType.Purple || enemy.type == EnemyType.Macaron || enemy.type == EnemyType.Gummy) && enemy.dashTimer < 0)
                 {
-                    speed *= enemy.type == EnemyType.Macaron ? (enemy.elite ? 4.1f : 3.1f) : 2.5f;
+                    speed *= enemy.type == EnemyType.Macaron ? (enemy.elite ? 3.3f : 2.5f) : 2.1f;
                     if (enemy.dashTimer < -0.28f) enemy.dashTimer = Random.Range(2.2f, 3.4f);
                 }
                 if (enemy.type == EnemyType.Lollipop || enemy.type == EnemyType.Donut)
@@ -855,44 +880,45 @@ namespace CandyChaos
                 {
                     if (enemy.boss)
                     {
-                        int count = enemy.type == EnemyType.BossKing ? 12 : 9;
+                        int count = enemy.type == EnemyType.BossKing ? 9 : 7;
                         for (int j = 0; j < count; j++)
                         {
                             float a = Mathf.PI * 2f * j / count + enemy.age * 0.27f;
-                            SpawnBullet(enemy.position, new Vector2(Mathf.Cos(a), Mathf.Sin(a)) * 4.2f, 11f + chapter * 2f, true, new Color32(245, 133, 194, 255));
+                            SpawnBullet(enemy.position, new Vector2(Mathf.Cos(a), Mathf.Sin(a)) * 4f, 9f + chapter * 1.5f, true,
+                                Color.white, 0, enemy.type == EnemyType.BossKing ? ShotKind.EnemyCaramel : ShotKind.EnemyJam);
                         }
                         audioPlayer.EnemyVolley(false);
-                        enemy.attackTimer = enemy.type == EnemyType.BossCake ? 1.85f : 2.35f;
+                        enemy.attackTimer = enemy.type == EnemyType.BossCake ? 2.5f : 2.9f;
                     }
                     else if (enemy.elite)
                     {
-                        if (enemy.type == EnemyType.Donut) EnemyShootRing(enemy, 8, 4.8f, false);
+                        if (enemy.type == EnemyType.Donut) EnemyShootRing(enemy, 6, 4.3f, false);
                         else if (enemy.type == EnemyType.Gummy)
                         {
-                            if (enemies.Count < 31) SpawnEnemyVariant(EnemyType.Gummy, enemy.position + Random.insideUnitCircle * 0.8f, false, true);
+                            if (enemies.Count < 24) SpawnEnemyVariant(EnemyType.Gummy, enemy.position + Random.insideUnitCircle * 0.8f, false, true);
                             EnemyShootFan(enemy, 2, 4.7f, false);
                         }
-                        else EnemyShootFan(enemy, enemy.type == EnemyType.Cupcake ? 5 : enemy.type == EnemyType.Cookie ||
-                            enemy.type == EnemyType.IceCream ? 3 : 2, enemy.type == EnemyType.IceCream ? 5.8f : 5f,
+                        else EnemyShootFan(enemy, enemy.type == EnemyType.Cupcake ? 3 : 2,
+                            enemy.type == EnemyType.IceCream ? 5.1f : 4.6f,
                             enemy.type == EnemyType.IceCream);
                         audioPlayer.EnemyVolley(enemy.type == EnemyType.IceCream);
-                        enemy.attackTimer = enemy.type == EnemyType.Gummy ? 4.2f : 2.7f;
+                        enemy.attackTimer = enemy.type == EnemyType.Gummy ? 4.8f : 3.3f;
                     }
                     else if (enemy.type == EnemyType.Cupcake || enemy.type == EnemyType.Lollipop ||
                              enemy.type == EnemyType.Cookie || enemy.type == EnemyType.IceCream || enemy.type == EnemyType.Donut)
                     {
-                        if (enemy.type == EnemyType.Donut) EnemyShootRing(enemy, 4, 4f, false);
-                        else EnemyShootFan(enemy, enemy.type == EnemyType.Cookie ? 2 : 1,
-                            enemy.type == EnemyType.Lollipop ? 6.3f : 4.8f, enemy.type == EnemyType.IceCream);
+                        if (enemy.type == EnemyType.Donut) EnemyShootRing(enemy, 3, 3.7f, false);
+                        else EnemyShootFan(enemy, 1,
+                            enemy.type == EnemyType.Lollipop ? 5.7f : 4.5f, enemy.type == EnemyType.IceCream);
                         audioPlayer.EnemyVolley(enemy.type == EnemyType.IceCream);
-                        enemy.attackTimer = enemy.type == EnemyType.Donut ? 3.8f : Random.Range(2.5f, 3.5f);
+                        enemy.attackTimer = enemy.type == EnemyType.Donut ? 4.4f : Random.Range(3.2f, 4.2f);
                     }
                     else enemy.attackTimer = 2f;
                 }
                 if (distance < enemy.radius + 0.34f && enemy.contactTimer <= 0)
                 {
-                    DamagePlayer(enemy.boss ? 19f : enemy.elite ? 16f : enemy.type == EnemyType.Tank ? 15f : 9f);
-                    enemy.contactTimer = 0.8f;
+                    DamagePlayer(enemy.boss ? 15f : enemy.elite ? 12f : enemy.type == EnemyType.Tank ? 11f : 7f);
+                    enemy.contactTimer = 1f;
                 }
             }
         }
@@ -905,9 +931,10 @@ namespace CandyChaos
             {
                 float angle = (i - (count - 1) * 0.5f) * 19f;
                 Vector2 shot = Quaternion.Euler(0, 0, angle) * direction;
-                SpawnBullet(enemy.position, shot * speed, enemy.elite ? 12f : 9f, true,
-                    frost ? new Color32(119, 214, 255, 255) : enemy.type == EnemyType.Cookie ? new Color32(229, 174, 104, 255) :
-                    new Color32(245, 151, 192, 255), 0, frost ? ShotKind.BlueberryIce : ShotKind.Standard, false, frost);
+                SpawnBullet(enemy.position, shot * speed, enemy.elite ? 10f : 7f, true,
+                    Color.white, 0,
+                    frost ? ShotKind.EnemyFrost : enemy.type == EnemyType.Cookie ? ShotKind.EnemyCaramel :
+                    enemy.type == EnemyType.Gummy ? ShotKind.EnemyMint : ShotKind.EnemyJam, false, frost);
             }
         }
 
@@ -917,8 +944,8 @@ namespace CandyChaos
             {
                 float angle = Mathf.PI * 2f * i / count + enemy.age * 0.24f;
                 Vector2 shot = new Vector2(Mathf.Cos(angle), Mathf.Sin(angle));
-                SpawnBullet(enemy.position, shot * speed, enemy.elite ? 12f : 8f, true,
-                    new Color32(255, 188, 113, 255), 0, ShotKind.Standard, false, frost);
+                SpawnBullet(enemy.position, shot * speed, enemy.elite ? 10f : 7f, true,
+                    Color.white, 0, ShotKind.EnemyCaramel, false, frost);
             }
         }
 
@@ -939,7 +966,7 @@ namespace CandyChaos
                     {
                         bool vulnerable = invincibleClock <= 0;
                         DamagePlayer(bullet.damage);
-                        if (vulnerable && bullet.slowsPlayer) playerSlowTimer = Mathf.Max(playerSlowTimer, 1.8f);
+                        if (vulnerable && bullet.slowsPlayer) playerSlowTimer = Mathf.Max(playerSlowTimer, 1.3f);
                         remove = true;
                     }
                 }
@@ -1082,14 +1109,15 @@ namespace CandyChaos
             score += boss ? 500 : enemy.elite ? 125 : enemy.child ? 10 : 25;
             if (bonusStage) SpawnDrop(position, DropType.Crystal, 1);
             else SpawnDrop(position, DropType.Sugar, boss ? 16 : enemy.elite ? 7 : enemy.child ? 1 : enemy.type == EnemyType.Tank ? 5 : 2);
-            if (Random.value < (boss ? 1f : enemy.elite ? 0.9f : 0.42f)) SpawnDrop(position + Random.insideUnitCircle * 0.28f, DropType.Coin, boss ? 20 : enemy.elite ? 6 : 1);
+            if (Random.value < (boss ? 1f : enemy.elite ? 0.9f : 0.55f)) SpawnDrop(position + Random.insideUnitCircle * 0.28f, DropType.Coin, boss ? 20 : enemy.elite ? 6 : 1);
             if (Random.value < 0.035f && !boss) SpawnDrop(position + Vector2.right * 0.22f, DropType.Heart, 18);
             if (enemy.type == EnemyType.Mint)
             {
                 for (int i = 0; i < 6; i++)
                 {
                     float a = 2f * Mathf.PI * i / 6f;
-                    SpawnBullet(position, new Vector2(Mathf.Cos(a), Mathf.Sin(a)) * 3.3f, 7f, true, new Color32(127, 222, 161, 255));
+                    SpawnBullet(position, new Vector2(Mathf.Cos(a), Mathf.Sin(a)) * 3.3f, 7f, true,
+                        Color.white, 0, ShotKind.EnemyMint);
                 }
             }
             if (enemy.elite && enemy.type == EnemyType.Pink)
@@ -1105,7 +1133,7 @@ namespace CandyChaos
             if (enemy.elite && enemy.type == EnemyType.Cupcake)
             {
                 SpawnRing(position, new Color32(255, 177, 205, 255), 3.5f);
-                if ((playerPosition - position).sqrMagnitude < 2.1f * 2.1f) DamagePlayer(18f);
+                if ((playerPosition - position).sqrMagnitude < 2.1f * 2.1f) DamagePlayer(14f);
                 for (int i = 0; i < 12; i++) HitSpark(position + Random.insideUnitCircle * 0.9f, new Color32(255, 205, 228, 255));
                 audioPlayer.CupcakeBlast();
             }
@@ -1119,7 +1147,7 @@ namespace CandyChaos
         {
             if (invincibleClock > 0 || mode != Mode.Playing) return;
             hp -= amount;
-            invincibleClock = 0.75f;
+            invincibleClock = 1f;
             audioPlayer.Hurt();
             for (int i = 0; i < 7; i++) HitSpark(playerPosition, new Color32(115, 201, 255, 255));
             if (hp <= 0) EndRun(false);
@@ -1129,12 +1157,15 @@ namespace CandyChaos
         {
             Sprite sprite = type == DropType.Crystal && CandyVisuals.CrystalProp != null ? CandyVisuals.CrystalProp :
                             type == DropType.Heart && CandyVisuals.HeartProp != null ? CandyVisuals.HeartProp :
+                            type == DropType.Coin && CandyVisuals.CandyCoin != null ? CandyVisuals.CandyCoin :
                             type == DropType.Sugar ? CandyVisuals.Star : CandyVisuals.Dot;
             SpriteRenderer visual = CandyVisuals.Create(type.ToString(), sprite,
                 position, type == DropType.Crystal ? (CandyVisuals.CrystalProp != null ? 0.32f : 0.52f) :
-                type == DropType.Heart && CandyVisuals.HeartProp != null ? 0.36f : type == DropType.Sugar ? 0.31f : 0.36f, 6, worldRoot);
+                type == DropType.Heart && CandyVisuals.HeartProp != null ? 0.36f : type == DropType.Sugar ? 0.31f :
+                type == DropType.Coin && CandyVisuals.CandyCoin != null ? 0.52f : 0.36f, 6, worldRoot);
             visual.color = type == DropType.Sugar ? new Color32(255, 214, 97, 255) : type == DropType.Crystal ? new Color32(255, 238, 135, 255) :
-                           type == DropType.Coin ? new Color32(255, 176, 58, 255) : new Color32(255, 93, 133, 255);
+                           type == DropType.Coin ? (CandyVisuals.CandyCoin != null ? Color.white : new Color32(255, 176, 58, 255)) :
+                           new Color32(255, 93, 133, 255);
             drops.Add(new Drop { sprite = visual, position = position, type = type, value = value });
         }
 
@@ -1169,7 +1200,7 @@ namespace CandyChaos
             {
                 sugar -= sugarGoal;
                 level++;
-                sugarGoal = 10 + level * 6;
+                sugarGoal = 9 + level * 5;
                 PickChoices();
                 mode = Mode.Upgrade;
                 audioPlayer.Upgrade();
@@ -1272,7 +1303,7 @@ namespace CandyChaos
         private void CompleteChapter()
         {
             chapterClearPending = false;
-            runCoins += 25 + chapter * 10;
+            runCoins += 35 + chapter * 12;
             wallet += runCoins;
             runCoins = 0;
             Save();
